@@ -1,9 +1,15 @@
 fastapi==0.109.2
 uvicorn==0.27.1
 tensorflow-cpu==2.12.0
-pillow>=9.0.0
-numpy>=1.23.5,<2.0.0
-gtts>=2.3.0
-google-generativeai>=0.3.0
+keras==2.12.0
+numpy==1.23.5
+protobuf==4.25.3
+tensorboard==2.12.3
+pillow==10.2.0
+gtts==2.5.1
+google-generativeai==0.4.0
 python-multipart==0.0.9
-python-dotenv>=1.0.0
+python-dotenv==1.0.0
+typing-extensions>=4.10.0
+# Fix potential urllib3 conflict
+urllib3<2.0.0

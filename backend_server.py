@@ -255,6 +255,32 @@ async def voice(request: VoiceRequest):
         print(f"Voice Error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
+# --- Global Exception Handling ---
+
+@app.exception_handler(Exception)
+async def global_exception_handler(request, exc):
+    print(f"Global Error: {exc}")
+    return JSONResponse(
+        status_code=500,
+        content={"success": False, "error": f"Internal Server Error: {str(exc)}"}
+    )
+
+@app.on_event("startup")
+async def startup_event():
+    print("Starting Harvest Tutor Backend...")
+    # Verify API Key
+    if not GEMINI_API_KEY:
+        print("WARNING: API_KEY not set! Explanations will fail.")
+    
+    # Pre-load models? No, keeping lazy load to save memory on startup.
+    # But checking if model directory exists is good.
+    for crop, path in MODEL_PATHS.items():
+        if not os.path.exists(path):
+            print(f"WARNING: Model for {crop} not found at {path}")
+    
+    print("Startup checks complete.")
+
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 10000))
+    print(f"Server listening on 0.0.0.0:{port}")
     uvicorn.run(app, host="0.0.0.0", port=port)
