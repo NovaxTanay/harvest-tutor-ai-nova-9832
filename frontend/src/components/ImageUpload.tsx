@@ -73,10 +73,10 @@ export default function ImageUpload({ onImageSelect, selectedImage, onClear }: I
             {!preview ? (
                 <div
                     className={`
-            relative border-4 border-dashed rounded-2xl p-8 transition-all duration-300 cursor-pointer
+            relative border-2 border-dashed rounded-2xl p-8 transition-all duration-300 cursor-pointer group
             ${dragActive
-                            ? 'border-primary-500 bg-primary-50'
-                            : 'border-gray-300 hover:border-primary-400 bg-white'
+                            ? 'border-emerald-500 bg-emerald-500/10 shadow-[0_0_30px_rgba(16,185,129,0.2)]'
+                            : 'border-white/10 hover:border-emerald-500/50 hover:bg-white/5'
                         }
           `}
                     onDragEnter={handleDrag}
@@ -97,42 +97,45 @@ export default function ImageUpload({ onImageSelect, selectedImage, onClear }: I
                         htmlFor="image-upload"
                         className="flex flex-col items-center justify-center gap-4 cursor-pointer"
                     >
-                        <div className="bg-primary-100 p-6 rounded-full">
-                            <Upload className="w-12 h-12 text-primary-700" />
+                        <div className={`
+                            p-6 rounded-full transition-transform duration-300 group-hover:scale-110
+                            ${dragActive ? 'bg-emerald-500/20' : 'bg-white/5 group-hover:bg-emerald-500/10'}
+                        `}>
+                            <Upload className={`w-12 h-12 transition-colors duration-300 ${dragActive ? 'text-emerald-400' : 'text-slate-400 group-hover:text-emerald-400'}`} />
                         </div>
                         <div className="text-center">
-                            <p className="text-xl font-semibold text-gray-900 mb-2">
+                            <p className="text-xl font-bold text-white mb-2">
                                 Upload Crop Image
                             </p>
-                            <p className="text-gray-600">
-                                Drag & drop or <span className="text-primary-700 font-medium">browse</span>
+                            <p className="text-slate-400">
+                                Drag & drop or <span className="text-emerald-400 font-medium underline decoration-emerald-500/30 underline-offset-4">browse</span>
                             </p>
-                            <p className="text-sm text-gray-500 mt-2">
+                            <p className="text-sm text-slate-500 mt-4">
                                 Supports: JPG, PNG (Max 10MB)
                             </p>
                         </div>
                     </label>
                 </div>
             ) : (
-                <div className="relative bg-white rounded-2xl shadow-lg overflow-hidden">
+                <div className="relative glass-panel rounded-2xl overflow-hidden group">
                     <button
                         onClick={handleClear}
-                        className="absolute top-4 right-4 z-10 bg-red-500 hover:bg-red-600 text-white p-2 rounded-full shadow-lg transition-all duration-300 transform hover:scale-110"
+                        className="absolute top-4 right-4 z-10 glass-btn backdrop-blur-md bg-black/40 hover:bg-red-500/80 p-2 rounded-full transition-all duration-300 transform hover:scale-110 border border-white/10"
                         aria-label="Remove image"
                     >
-                        <X className="w-5 h-5" />
+                        <X className="w-5 h-5 text-white" />
                     </button>
 
-                    <div className="relative">
+                    <div className="relative flex justify-center bg-black/20 p-4">
                         <img
                             src={preview}
                             alt="Uploaded crop"
-                            className="w-full h-auto max-h-96 object-contain"
+                            className="w-full h-auto max-h-96 object-contain rounded-lg"
                         />
-                        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-4">
+                        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-4 translate-y-full group-hover:translate-y-0 transition-transform duration-300">
                             <div className="flex items-center gap-2 text-white">
-                                <ImageIcon className="w-5 h-5" />
-                                <span className="text-sm font-medium">
+                                <ImageIcon className="w-5 h-5 text-emerald-400" />
+                                <span className="text-sm font-medium truncate">
                                     {selectedImage?.name}
                                 </span>
                             </div>

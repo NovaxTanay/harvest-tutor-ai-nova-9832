@@ -8,9 +8,9 @@ import AudioPlayer from '@/components/AudioPlayer'
 import { predictDisease, getExplanation, generateVoice } from '@/lib/api'
 
 const CROPS = [
-    { name: 'Tomato', icon: '🍅', color: 'from-red-500 to-red-600' },
-    { name: 'Potato', icon: '🥔', color: 'from-yellow-600 to-yellow-700' },
-    { name: 'Apple', icon: '🍎', color: 'from-green-500 to-green-600' },
+    { name: 'Tomato', icon: '🍅' },
+    { name: 'Potato', icon: '🥔' },
+    { name: 'Apple', icon: '🍎' },
 ]
 
 const LANGUAGES = [
@@ -37,7 +37,6 @@ export default function DiagnosePage() {
 
     const handleImageSelect = (file: File) => {
         setSelectedImage(file)
-        // Reset previous results
         setAnalysisState('idle')
         setDisease('')
         setExplanation('')
@@ -61,7 +60,6 @@ export default function DiagnosePage() {
         }
 
         try {
-            // Step 1: Predict disease
             setAnalysisState('predicting')
             setError('')
 
@@ -74,7 +72,6 @@ export default function DiagnosePage() {
             setDisease(predictionResult.disease)
             setConfidence(predictionResult.confidence || 0)
 
-            // Step 2: Get explanation
             setAnalysisState('explaining')
 
             const explanationResult = await getExplanation(
@@ -83,28 +80,20 @@ export default function DiagnosePage() {
                 selectedLanguage
             )
 
-            if (!explanationResult.success || !explanationResult.explanation) {
-                throw new Error(explanationResult.error || 'Failed to get explanation')
-            }
+            // Graceful fallback for explanation
+            const explText = explanationResult.success && explanationResult.explanation
+                ? explanationResult.explanation
+                : "Expert explanation currently unavailable. Please check the disease name and consult a local agronomist."
 
-            setExplanation(explanationResult.explanation)
+            setExplanation(explText)
 
-            // Step 3: Generate voice
             setAnalysisState('generating-voice')
 
-            const voiceResult = await generateVoice(
-                explanationResult.explanation,
-                selectedLanguage
-            )
+            const voiceResult = await generateVoice(explText, selectedLanguage)
 
-            if (!voiceResult.success) {
-                // Voice generation failed, but we can still show results
-                console.warn('Voice generation failed:', voiceResult.error)
-                setAudioBase64('') // No audio available
-            } else if (voiceResult.audioBase64) {
+            if (voiceResult.success && voiceResult.audioBase64) {
                 setAudioBase64(voiceResult.audioBase64)
             } else {
-                // No base64 audio, will use Web Speech API
                 setAudioBase64('')
             }
 
@@ -119,47 +108,37 @@ export default function DiagnosePage() {
 
     const getLoadingMessage = () => {
         switch (analysisState) {
-            case 'predicting':
-                return 'Analyzing crop image...'
-            case 'explaining':
-                return 'Getting expert explanation...'
-            case 'generating-voice':
-                return 'Generating voice guidance...'
-            default:
-                return 'Processing...'
+            case 'predicting': return 'Analyzing crop image...'
+            case 'explaining': return 'Getting expert explanation...'
+            case 'generating-voice': return 'Generating voice guidance...'
+            default: return 'Processing...'
         }
-    }
-
-    const getConfidenceColor = (conf: number) => {
-        if (conf >= 0.8) return 'text-green-600 bg-green-100'
-        if (conf >= 0.6) return 'text-yellow-600 bg-yellow-100'
-        return 'text-red-600 bg-red-100'
     }
 
     const isLoading = ['predicting', 'explaining', 'generating-voice'].includes(analysisState)
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
+        <div className="min-h-screen">
             {/* Header */}
-            <header className="bg-gradient-agriculture shadow-lg">
-                <nav className="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
-                    <Link href="/" className="flex items-center gap-2 text-white hover:opacity-80 transition-opacity">
-                        <Home className="w-6 h-6" />
-                        <span className="text-xl font-bold hidden sm:inline">Back to Home</span>
+            <header className="px-4 py-4 fixed w-full top-0 z-50">
+                <nav className="max-w-7xl mx-auto glass-panel rounded-full px-6 py-3 flex justify-between items-center">
+                    <Link href="/" className="flex items-center gap-2 text-white hover:text-emerald-400 transition-colors">
+                        <Home className="w-5 h-5" />
+                        <span className="font-medium hidden sm:inline">Back to Home</span>
                     </Link>
                     <div className="flex items-center gap-2 text-white">
-                        <Sprout className="w-8 h-8" />
-                        <span className="text-2xl font-bold">Harvest Tutor</span>
+                        <Sprout className="w-6 h-6 text-emerald-400" />
+                        <span className="text-lg font-bold">Harvest Tutor</span>
                     </div>
                 </nav>
             </header>
 
-            <main className="max-w-7xl mx-auto px-4 py-8">
-                <div className="text-center mb-8 animate-slide-up">
-                    <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-3">
-                        Crop Disease Diagnosis
+            <main className="max-w-7xl mx-auto px-4 pt-32 pb-12">
+                <div className="text-center mb-10 animate-slide-up">
+                    <h1 className="text-4xl md:text-5xl font-bold mb-3 text-white drop-shadow-lg">
+                        <span className="text-gradient">Crop Disease Diagnosis</span>
                     </h1>
-                    <p className="text-xl text-gray-600">
+                    <p className="text-lg text-slate-300">
                         Upload a photo and get instant AI-powered analysis
                     </p>
                 </div>
@@ -168,9 +147,9 @@ export default function DiagnosePage() {
                     {/* Left Column - Input Section */}
                     <div className="space-y-6">
                         {/* Crop Selection */}
-                        <div className="card animate-slide-up">
-                            <h2 className="text-2xl font-bold text-gray-900 mb-4 flex items-center gap-2">
-                                <span className="bg-primary-100 text-primary-700 w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold">1</span>
+                        <div className="glass-panel rounded-3xl p-6 animate-slide-up">
+                            <h2 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
+                                <span className="bg-emerald-500/20 text-emerald-400 w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold border border-emerald-500/30">1</span>
                                 Select Crop
                             </h2>
                             <div className="grid grid-cols-3 gap-3">
@@ -179,24 +158,24 @@ export default function DiagnosePage() {
                                         key={crop.name}
                                         onClick={() => setSelectedCrop(crop.name)}
                                         className={`
-                      p-4 rounded-xl border-2 transition-all duration-300 transform hover:scale-105
-                      ${selectedCrop === crop.name
-                                                ? 'border-primary-600 bg-primary-50 shadow-lg'
-                                                : 'border-gray-200 bg-white hover:border-primary-300'
+                                            p-4 rounded-xl border transition-all duration-300 relative overflow-hidden group
+                                            ${selectedCrop === crop.name
+                                                ? 'bg-emerald-500/20 border-emerald-500/50 shadow-[0_0_20px_rgba(16,185,129,0.2)]'
+                                                : 'bg-white/5 border-white/10 hover:border-white/30 hover:bg-white/10'
                                             }
-                    `}
+                                        `}
                                     >
-                                        <div className="text-4xl mb-2">{crop.icon}</div>
-                                        <div className="font-semibold text-gray-900">{crop.name}</div>
+                                        <div className="text-4xl mb-2 transform group-hover:scale-110 transition-transform">{crop.icon}</div>
+                                        <div className="font-semibold text-white">{crop.name}</div>
                                     </button>
                                 ))}
                             </div>
                         </div>
 
                         {/* Language Selection */}
-                        <div className="card animate-slide-up">
-                            <h2 className="text-2xl font-bold text-gray-900 mb-4 flex items-center gap-2">
-                                <span className="bg-primary-100 text-primary-700 w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold">2</span>
+                        <div className="glass-panel rounded-3xl p-6 animate-slide-up" style={{ animationDelay: '0.1s' }}>
+                            <h2 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
+                                <span className="bg-emerald-500/20 text-emerald-400 w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold border border-emerald-500/30">2</span>
                                 Choose Language
                             </h2>
                             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
@@ -205,24 +184,24 @@ export default function DiagnosePage() {
                                         key={lang.name}
                                         onClick={() => setSelectedLanguage(lang.name)}
                                         className={`
-                      p-3 rounded-lg border-2 transition-all duration-300
-                      ${selectedLanguage === lang.name
-                                                ? 'border-primary-600 bg-primary-50'
-                                                : 'border-gray-200 bg-white hover:border-primary-300'
+                                            p-3 rounded-lg border transition-all duration-300
+                                            ${selectedLanguage === lang.name
+                                                ? 'bg-emerald-500/20 border-emerald-500/50 text-white'
+                                                : 'bg-white/5 border-white/10 text-slate-300 hover:bg-white/10 hover:border-white/30'
                                             }
-                    `}
+                                        `}
                                     >
                                         <div className="text-2xl mb-1">{lang.flag}</div>
-                                        <div className="text-sm font-medium text-gray-900">{lang.name}</div>
+                                        <div className="text-sm font-medium">{lang.name}</div>
                                     </button>
                                 ))}
                             </div>
                         </div>
 
                         {/* Image Upload */}
-                        <div className="card animate-slide-up">
-                            <h2 className="text-2xl font-bold text-gray-900 mb-4 flex items-center gap-2">
-                                <span className="bg-primary-100 text-primary-700 w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold">3</span>
+                        <div className="glass-panel rounded-3xl p-6 animate-slide-up" style={{ animationDelay: '0.2s' }}>
+                            <h2 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
+                                <span className="bg-emerald-500/20 text-emerald-400 w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold border border-emerald-500/30">3</span>
                                 Upload Image
                             </h2>
                             <ImageUpload
@@ -237,12 +216,12 @@ export default function DiagnosePage() {
                             onClick={handleAnalyze}
                             disabled={!selectedImage || isLoading}
                             className={`
-                w-full py-5 rounded-xl font-bold text-xl transition-all duration-300 shadow-xl flex items-center justify-center gap-3
-                ${!selectedImage || isLoading
-                                    ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                                    : 'bg-gradient-agriculture text-white hover:shadow-2xl transform hover:scale-105'
+                                w-full py-5 rounded-2xl font-bold text-xl transition-all duration-300 shadow-xl flex items-center justify-center gap-3 relative overflow-hidden
+                                ${!selectedImage || isLoading
+                                    ? 'bg-white/5 text-slate-500 cursor-not-allowed border border-white/5'
+                                    : 'glass-btn-primary hover:scale-[1.02]'
                                 }
-              `}
+                            `}
                         >
                             {isLoading ? (
                                 <>
@@ -261,46 +240,46 @@ export default function DiagnosePage() {
                     {/* Right Column - Results Section */}
                     <div className="space-y-6">
                         {error && (
-                            <div className="card bg-red-50 border-2 border-red-200 animate-slide-up">
+                            <div className="glass-panel border-red-500/30 bg-red-500/10 p-6 rounded-2xl animate-slide-up">
                                 <div className="flex items-start gap-3">
-                                    <AlertCircle className="w-6 h-6 text-red-600 flex-shrink-0 mt-1" />
+                                    <AlertCircle className="w-6 h-6 text-red-400 flex-shrink-0 mt-1" />
                                     <div>
-                                        <h3 className="font-bold text-red-900 mb-1">Error</h3>
-                                        <p className="text-red-700">{error}</p>
+                                        <h3 className="font-bold text-red-200 mb-1">Error</h3>
+                                        <p className="text-red-100/80">{error}</p>
                                     </div>
                                 </div>
                             </div>
                         )}
 
                         {disease && (
-                            <div className="card animate-slide-up">
-                                <div className="flex items-center gap-3 mb-4">
-                                    <CheckCircle2 className="w-8 h-8 text-green-600" />
-                                    <h2 className="text-2xl font-bold text-gray-900">Disease Detected</h2>
+                            <div className="glass-card p-8 animate-slide-up border-emerald-500/30">
+                                <div className="flex items-center gap-3 mb-6">
+                                    <CheckCircle2 className="w-8 h-8 text-emerald-400" />
+                                    <h2 className="text-2xl font-bold text-white">Disease Detected</h2>
                                 </div>
 
-                                <div className="bg-gradient-to-br from-primary-50 to-primary-100 rounded-xl p-6 mb-4">
-                                    <h3 className="text-3xl font-bold text-gray-900 mb-3">{disease}</h3>
+                                <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-xl p-6 mb-6">
+                                    <h3 className="text-3xl font-bold text-emerald-100 mb-2">{disease}</h3>
                                     <div className="flex items-center gap-2">
-                                        <span className="text-sm text-gray-600">Confidence:</span>
-                                        <span className={`px-3 py-1 rounded-full text-sm font-bold ${getConfidenceColor(confidence)}`}>
+                                        <span className="text-sm text-emerald-200/70">Confidence:</span>
+                                        <span className={`px-3 py-1 rounded-full text-sm font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30`}>
                                             {(confidence * 100).toFixed(1)}%
                                         </span>
                                     </div>
                                 </div>
 
-                                <div className="space-y-2 text-sm text-gray-600">
-                                    <p><strong>Crop:</strong> {selectedCrop}</p>
-                                    <p><strong>Language:</strong> {selectedLanguage}</p>
+                                <div className="space-y-2 text-sm text-slate-300">
+                                    <p><strong className="text-emerald-400">Crop:</strong> {selectedCrop}</p>
+                                    <p><strong className="text-emerald-400">Language:</strong> {selectedLanguage}</p>
                                 </div>
                             </div>
                         )}
 
                         {explanation && (
-                            <div className="card animate-slide-up">
-                                <h2 className="text-2xl font-bold text-gray-900 mb-4">Expert Explanation</h2>
-                                <div className="prose prose-lg max-w-none">
-                                    <div className="whitespace-pre-wrap text-gray-700 leading-relaxed">
+                            <div className="glass-card p-8 animate-slide-up" style={{ animationDelay: '0.1s' }}>
+                                <h2 className="text-2xl font-bold text-white mb-4">Expert Explanation</h2>
+                                <div className="prose prose-invert prose-lg max-w-none">
+                                    <div className="whitespace-pre-wrap text-slate-200 leading-relaxed font-light">
                                         {explanation}
                                     </div>
                                 </div>
@@ -308,7 +287,7 @@ export default function DiagnosePage() {
                         )}
 
                         {audioBase64 && (
-                            <div className="animate-slide-up">
+                            <div className="glass-panel p-6 rounded-2xl animate-slide-up" style={{ animationDelay: '0.2s' }}>
                                 <AudioPlayer
                                     audioBase64={audioBase64}
                                     language={selectedLanguage}
@@ -317,51 +296,41 @@ export default function DiagnosePage() {
                             </div>
                         )}
 
-                        {/* Web Speech API Fallback when no base64 audio */}
+                        {/* Web Speech API Fallback */}
                         {explanation && !audioBase64 && analysisState === 'complete' && (
-                            <div className="card animate-slide-up">
+                            <div className="glass-panel p-6 rounded-2xl animate-slide-up">
                                 <div className="flex items-center gap-3 mb-4">
-                                    <div className="bg-primary-600 p-3 rounded-full">
-                                        <Volume2 className="w-6 h-6 text-white" />
+                                    <div className="bg-amber-500/20 p-3 rounded-full border border-amber-500/30">
+                                        <Volume2 className="w-6 h-6 text-amber-400" />
                                     </div>
                                     <div>
-                                        <h3 className="font-bold text-lg text-gray-900">Voice Guidance</h3>
-                                        <p className="text-sm text-gray-600">Click to listen in {selectedLanguage}</p>
+                                        <h3 className="font-bold text-lg text-white">Voice Guidance</h3>
+                                        <p className="text-sm text-slate-400">Click to listen in {selectedLanguage}</p>
                                     </div>
                                 </div>
                                 <button
                                     onClick={() => {
                                         const utterance = new SpeechSynthesisUtterance(explanation);
-                                        const langCodes: Record<string, string> = {
-                                            'English': 'en-US',
-                                            'Hindi': 'hi-IN',
-                                            'Telugu': 'te-IN',
-                                            'Tamil': 'ta-IN',
-                                            'Bengali': 'bn-IN',
-                                            'Marathi': 'mr-IN',
-                                        };
-                                        utterance.lang = langCodes[selectedLanguage] || 'en-US';
-                                        utterance.rate = 0.9;
+                                        // Simple locale mapping
+                                        const langMap: any = { 'Hindi': 'hi-IN', 'English': 'en-US' };
+                                        utterance.lang = langMap[selectedLanguage] || 'en-US';
                                         speechSynthesis.speak(utterance);
                                     }}
-                                    className="w-full bg-primary-600 hover:bg-primary-700 text-white font-semibold py-4 px-6 rounded-xl transition-all duration-300 flex items-center justify-center gap-3 shadow-lg hover:shadow-xl"
+                                    className="w-full glass-btn-secondary flex items-center justify-center gap-2 mb-2"
                                 >
-                                    <Play className="w-6 h-6" />
+                                    <Play className="w-5 h-5" />
                                     Listen to Explanation
-                                </button>
-                                <button
-                                    onClick={() => speechSynthesis.cancel()}
-                                    className="w-full mt-3 bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold py-3 px-6 rounded-xl transition-all duration-300"
-                                >
-                                    Stop Audio
                                 </button>
                             </div>
                         )}
 
+                        {/* Idle State Placeholder */}
                         {analysisState === 'idle' && !error && (
-                            <div className="card text-center py-12">
-                                <Sprout className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                                <p className="text-gray-500 text-lg">
+                            <div className="glass-panel border-dashed border-white/10 rounded-3xl p-12 text-center h-full flex flex-col items-center justify-center">
+                                <div className="bg-white/5 p-6 rounded-full mb-4">
+                                    <Sprout className="w-12 h-12 text-slate-500" />
+                                </div>
+                                <p className="text-slate-400 text-lg">
                                     Results will appear here after analysis
                                 </p>
                             </div>
@@ -369,15 +338,6 @@ export default function DiagnosePage() {
                     </div>
                 </div>
             </main>
-
-            {/* Footer */}
-            <footer className="mt-16 bg-primary-900 text-white px-4 py-8">
-                <div className="max-w-7xl mx-auto text-center">
-                    <p className="text-green-200">
-                        © 2026 Harvest Tutor • AI-Powered Agricultural Assistant
-                    </p>
-                </div>
-            </footer>
         </div>
     )
 }

@@ -1,0 +1,3 @@
+0 Tomato___Bacterial_spot
+1 Tomato___Spider_mites Two-spotted_spider_mite
+2 Tomato___healthy
